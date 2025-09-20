@@ -40,6 +40,8 @@ Transformers.jsは、ダウンロードしたモデルをブラウザのIndexedD
 
 モデルは`.onnx`という形式で提供されます。ONNX（Open Neural Network Exchange）は、FacebookとMicrosoftが共同で開発したオープンソースの深層学習モデルのフォーマットです。ONNXは、異なるフレームワーク間でモデルを共有するための標準的な形式を提供します。
 
+Pythonを使って学習させたモデルはそのままではTransformers.jsで使えないことがあります。Transformers.jsで使うには、Hugging FaceのTransformersライブラリを使ってONNX形式に変換する必要があります。
+
 ### WASMとWebGLについて
 
 WASM（WebAssembly）は、ブラウザ上で高性能なコードを実行するためのバイナリ形式の命令セットです。WASMを使用すると、C++やRustなどの言語で書かれたコードをブラウザ上で実行できます。
