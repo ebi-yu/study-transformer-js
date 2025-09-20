@@ -1,6 +1,6 @@
 import { env, pipeline } from "@xenova/transformers";
 
-// Transformers.jsの環境設定を最小限に
+// bundlerかつTransformer.jsを使う場合に必要
 env.allowLocalModels = false;
 env.useBrowserCache = false;
 
@@ -9,71 +9,103 @@ if (typeof window !== "undefined") {
   window.transformersDebug = true;
 }
 
-class MyTranslationPipeline {
-  static task = "translation";
-  static model = "Xenova/nllb-200-distilled-600M";
-  static instance = null;
+// グローバル変数を初期化
+globalThis.__translator = null;
 
-  static async getInstance(progress_callback = null) {
-    if (this.instance === null) {
-      try {
-        // シンプルな設定でパイプラインを初期化
-        this.instance = await pipeline(this.task, this.model, {
-          progress_callback: (progress) => {
-            if (progress_callback) progress_callback(progress);
-          },
-        });
-
-        console.log("Model loaded successfully");
-      } catch (error) {
-        console.error("Pipeline initialization failed:", error);
-        console.error("Error stack:", error.stack);
-        console.error("Error details:", {
-          name: error.name,
-          message: error.message,
-          cause: error.cause,
-        });
-
-        self.postMessage({
-          status: "error",
-          error: `モデルの初期化に失敗しました: ${error.message}`,
-        });
-        throw error;
-      }
-    }
-    return this.instance;
+// メッセージを送信する共通関数
+function sendMessage(data) {
+  switch (data.status) {
+    case "initiate":
+      console.log("Loading model...");
+      self.postMessage({
+        status: "initiate",
+        file: data.file,
+        progress: 0,
+      });
+      break;
+    case "progress":
+      self.postMessage({
+        status: "progress",
+        file: data.file,
+        progress: Math.round(data.progress * 100),
+      });
+      break;
+    case "done":
+      console.log("Model loaded successfully");
+      self.postMessage({
+        status: "done",
+        file: data.file,
+      });
+      break;
+    case "error":
+      console.error("Translation error:", data.error);
+      self.postMessage({
+        status: "error",
+        error: data.error,
+      });
+      break;
+    case "ready":
+      console.log("Model loaded successfully Ready");
+      self.postMessage({
+        status: "ready_to_translate",
+        file: data.file,
+      });
+      break;
+    default:
+      // その他のメッセージはそのまま送信
+      self.postMessage(data);
+      break;
   }
 }
 
-// Listen for messages from the main thread
+async function getInstance(callback) {
+  if (globalThis.__translator === null) {
+    try {
+      callback({ status: "initiate", progress: 0 });
+
+      globalThis.__translator = await pipeline(
+        "translation",
+        "Xenova/nllb-200-distilled-600M",
+        {
+          progress_callback: (progress) => {
+            console.log("Progress:", progress);
+            callback(progress);
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Error loading model:", error);
+      callback({
+        status: "error",
+        error: `モデルの初期化に失敗しました: ${error.message}`,
+      });
+      throw error;
+    }
+  }
+  return globalThis.__translator;
+}
+
 self.addEventListener("message", async (event) => {
   try {
-    // Retrieve the translation pipeline. When called for the first time,
-    // this will load the pipeline and save it for future use.
-    let translator = await MyTranslationPipeline.getInstance((x) => {
-      // We also add a progress callback to the pipeline so that we can
-      // track model loading.
-      self.postMessage(x);
-    });
-
-    // パイプラインが正常に初期化されたことを通知
-    self.postMessage({
-      status: "ready",
-    });
+    let translator = await getInstance(sendMessage);
 
     let output = await translator(event.data.text, {
       src_lang: event.data.src_lang,
       tgt_lang: event.data.tgt_lang,
     });
+
     self.postMessage({
-      status: "update",
+      status: "translated",
       output: output[0].translation_text,
     });
   } catch (error) {
-    console.error("Translation error:", error);
-    self.postMessage({
+    sendMessage({
       status: "error",
       error: `翻訳処理でエラーが発生しました: ${error.message}`,
     });
   }
+});
+
+getInstance(sendMessage).catch((error) => {
+  console.error("Failed to initialize model:", error);
 });

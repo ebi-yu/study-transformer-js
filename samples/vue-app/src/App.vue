@@ -1,6 +1,5 @@
 <template>
-  <h1>Transformers.js</h1>
-  <h2>ML-powered multilingual translation in Vue 3!</h2>
+  <h1>Transformers.js : 翻訳デモ</h1>
 
   <div class="container">
     <div class="language-container">
@@ -17,15 +16,14 @@
     </div>
 
     <div class="textbox-container">
-      <textarea v-model="input" rows="3"></textarea>
-      <textarea v-model="output" rows="3" readonly></textarea>
+      <textarea v-model="input" rows="10"></textarea>
+      <textarea v-model="output" rows="10" readonly></textarea>
     </div>
   </div>
 
-  <button :disabled="disabled" @click="translate">Translate</button>
+  <button :disabled="disabled" @click="translate">{{ buttonLabel }}</button>
 
   <div class="progress-bars-container">
-    <label v-if="ready === false">Loading models... (only run once)</label>
     <div v-for="data in progressItems" :key="data.file">
       <Progress :text="data.file" :percentage="data.progress" />
     </div>
@@ -33,14 +31,16 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import LanguageSelector from "./components/LanguageSelector.vue";
 import Progress from "./components/Progress.vue";
 
 // 状態管理
-const ready = ref(null);
 const disabled = ref(false);
 const progressItems = ref([]);
+const buttonLabel = computed(() =>
+  disabled.value ? "Loading..." : "Translate"
+);
 
 const input = ref("I love walking my dog.");
 const sourceLanguage = ref("eng_Latn");
@@ -60,8 +60,8 @@ onMounted(() => {
   const onMessageReceived = (e) => {
     switch (e.data.status) {
       case "initiate":
-        ready.value = false;
         progressItems.value.push(e.data);
+        disabled.value = true;
         break;
       case "progress":
         progressItems.value = progressItems.value.map((item) =>
@@ -75,18 +75,17 @@ onMounted(() => {
           (item) => item.file !== e.data.file
         );
         break;
-      case "ready":
-        ready.value = true;
+      case "ready_to_translate":
+        // 翻訳準備完了
+        progressItems.value = [];
+        disabled.value = false;
         break;
       case "error":
         console.error("Worker error:", e.data.error);
-        ready.value = false;
         disabled.value = false;
         break;
-      case "update":
+      case "translated":
         output.value = e.data.output;
-        break;
-      case "complete":
         disabled.value = false;
         break;
     }
@@ -124,5 +123,27 @@ const translate = () => {
 }
 .progress-bars-container {
   margin-top: 1rem;
+}
+
+button {
+  padding: 8px 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+button:disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 </style>

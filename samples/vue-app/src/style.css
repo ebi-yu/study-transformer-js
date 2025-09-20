@@ -97,6 +97,13 @@ button:focus-visible {
 
 .language-selector > select {
   width: 150px;
+  height: 24px;
+  border-radius: 10px;
+}
+
+.language-selector > label {
+  font-size: 1.1rem;
+  padding-right: 8px;
 }
 
 .progress-container {

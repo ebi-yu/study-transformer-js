@@ -89,3 +89,21 @@ if (!globalThis.__translator) {
   );
 }
 const detector = globalThis.__translator;
+```
+
+### Web Workerでモデルを実行する
+
+Transformer.js はモデルのロードと実行に時間がかかる場合があります。
+特に、大きなモデルを使用する場合、メインスレッドでモデルを実行すると、UIがフリーズすることがあります。
+
+Web Workerとは、JavaScriptのコードをバックグラウンドで実行するための仕組みです。
+Web Workerを使用してモデルを実行すると、メインスレッドがブロックされるのを防ぎ、UIの応答性を維持できます。Web Workerとの通信には`postMessage`と`onmessage`を使用します。
+
+```ts
+const worker = new Worker(new URL("./worker.js", import.meta.url), {
+  type: "module",
+});
+
+worker.postMessage({ text: input.value });
+worker.addEventListener("message", onMessageReceived);
+```

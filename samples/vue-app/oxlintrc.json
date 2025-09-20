@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "max-len": ["error", { "code": 120 }],
+    "object-curly-newline": [
+      "error",
+      {
+        "ObjectExpression": { "multiline": true, "minProperties": 3 },
+        "ObjectPattern": { "multiline": true, "minProperties": 3 }
+      }
+    ],
+    "object-property-newline": [
+      "error",
+      { "allowAllPropertiesOnSameLine": true }
+    ]
+  }
+}
