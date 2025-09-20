@@ -1,8 +1,13 @@
-# 概要
+# study-transformers-js
 
-このリポジトリはtransformer.jsの学習用です。
-transformer.jsは、Hugging FaceのTransformersライブラリをJavaScriptで実装したもので、ブラウザやNode.js環境で機械学習モデルを実行するためのツールです。
-transformer.jsを用いるとブラウザ上でもAIを利用したアプリケーションを構築できます。
+学習目的でtransformers.jsを試すためのリポジトリです。ブラウザ / Node.js で推論が完結する PoC・デモを素早く作るためのサンプルと実装ノウハウをまとめています。
+
+## サンプル一覧
+
+| ディレクトリ | 説明 | 主目的 |
+|--------------|------|--------|
+| `samples/vanilla-app` | 最小構成 (Vanilla + Vite) | 基本 API 確認 / パイプライン呼び出し |
+| `samples/vue-app` | Vue 3 + Vite + Web Worker + 進捗 UI | 実務寄り構成 / 非同期 & UI 応答性 |
 
 ## Hugging Faceとは
 
@@ -11,10 +16,10 @@ Hugging Faceには、数千もの事前学習済みモデルが公開されて�
 
 <https://huggingface.co/>
 
-## Transformer.jsとは
+## Transformers.jsとは
 
-Transformer.jsは、Hugging FaceのTransformersライブラリの一部をJavaScriptで実装したものです。
-Transformer.jsを使用すると、ブラウザやNode.js環境で機械学習モデルを実行できます。
+Transformers.jsは、Hugging FaceのTransformersライブラリの一部をJavaScriptで実装したものです。
+Transformers.jsを使用すると、ブラウザやNode.js環境で機械学習モデルを実行できます。
 
 - 📝自然言語処理：テキスト分類、固有表現認識、質問応答、言語モデル化、要約、翻訳、複数選択、テキスト生成。
 - 🖼️コンピューター ビジョン: 画像分類、オブジェクト検出、セグメンテーション、深度推定。
@@ -23,14 +28,13 @@ Transformer.jsを使用すると、ブラウザやNode.js環境で機械学習�
 
 <https://huggingface.co/docs/transformers.js/index>
 
-### Transformer.jsの仕組み
+### Transformers.jsの仕組み
 
-Transformer.jsは、ダウンロードしたモデルをブラウザのIndexedDBに保存し、必要に応じてWebFLやWSMを使用してモデルを実行します。以下に、Transformer.jsがどのように動作するかを示します。
+Transformers.jsは、ダウンロードしたモデルをブラウザのIndexedDBに保存し、必要に応じてWebGLやWASMを使用してモデルを実行します。以下に、Transformers.jsがどのように動作するかを示します。
 
-1. モデルのダウンロード: Transformer.jsは、Hugging Faceのモデルをダウンロードし、ブラウザのIndexedDBに保存します。
-2. モデルの実行: 必要に応じて、Transformer.jsはWebGLやWSMを使用してモデルを実行します。これにより、ブラウザ上で高速にモデルを実行できます。
+1. モデルのダウンロード: Transformers.jsは、Hugging Faceのモデルをダウンロードし、ブラウザのIndexedDBに保存します。
+2. モデルの実行: 必要に応じて、Transformers.jsはWebGLやWASMを使用してモデルを実行します。これにより、ブラウザ上で高速にモデルを実行できます。
 3. 結果の取得: モデルの実行結果は、JavaScriptのPromiseとして返されます。これにより、非同期的に結果を取得できます。
-4.
 
 ### モデルの形式について
 
@@ -39,71 +43,104 @@ Transformer.jsは、ダウンロードしたモデルをブラウザのIndexedDB
 ### WASMとWebGLについて
 
 WASM（WebAssembly）は、ブラウザ上で高性能なコードを実行するためのバイナリ形式の命令セットです。WASMを使用すると、C++やRustなどの言語で書かれたコードをブラウザ上で実行できます。
-Transformer.jsでは、WASMを使用してモデルの推論を高速化しています。
+Transformers.jsでは、WASMを使用してモデルの推論を高速化しています。
 
 WebGLは、ブラウザ上で3Dグラフィックスを描画するためのAPIです。
-Transformer.jsでは、WebGLを使用することでWASMよりもさらに高速にモデルを実行できます。
+Transformers.jsでは、WebGLを使用することでWASMよりもさらに高速にモデルを実行できます。
 ただ、初回のモデルの読み込みに時間がかかる場合があります。
 
 ## 実装時のポイント
 
-以下に、Transformer.jsを実装する際のポイントを示します。
+以下に、Transformers.jsを実装する際のポイントを示します。
 
 ### react/vue + vite/webpackなどのbundlerを使う場合の注意点
 
-Vite や Webpack などの bundler を使うと、モデルの JSON 取得先が誤って書き換わり、`Unexpected token '<'` が出ることがあります。
+Vite や Webpack などの bundler を使うと、モデルの JSON 取得先が誤って書き換わり、`Unexpected token '<'` が出ることがあります。このエラーは「JSON を期待したのに HTML が返ってきた」＝**正しいモデル JSON が取得できていない**ことを意味します。
 
-このエラーは「JSON を期待したのに HTML が返ってきた」＝**正しいモデル JSON が取得できていない**ことを意味します。
-
-<https://github.com/huggingface/transformers.js/issues/366>>
-<https://github.com/huggingface/transformers.js/issues/142#issuecomment-2018319444>
-
-#### 1.回避方法
-
-環境変数の設定で回避可能.
+回避するには、環境変数を設定します。
 これにより bundler によるパスの誤解決やキャッシュの不整合を防げます。
 
 ```ts
 import { env } from "@xenova/transformers";
 
-env.allowLocalModels = false;   // ローカルのモデル参照を無効化
+env.allowLocalModels = false; // ローカル参照を無効化（相対パス解決の誤作動防止）
 env.useBrowserCache = false;   // ブラウザキャッシュを使わない
 ```
 
-##### 追加の対策ポイント
+### Web Workerを使ってUIの応答性を保つ
 
-- 必要に応じて `env.localModelPath` や `env.remoteModelPath` を明示的に指定してパスを固定する。
-- bundler を使わず CDN 経由でロードする場合は問題が発生しにくい。
-
-### モデルをグローバルにキャッシュする
-
-Transformer.js はモデルのロードに時間がかかる場合があります。
-特に、アプリケーションの複数のコンポーネントで同じモデルを使用する場合、各コンポーネントでモデルを再度ロードすると無駄に時間がかかります。  
-globalThis にモデルをキャッシュしておくと、モデルがキャッシュされ、再度ロードする必要がなくなります。
-
-```js
-if (!globalThis.__translator) {
-  globalThis.__translator = await pipeline(
-    "object-detection",
-    "Xenova/detr-resnet-50"
-  );
-}
-const detector = globalThis.__translator;
-```
-
-### Web Workerでモデルを実行する
-
-Transformer.js はモデルのロードと実行に時間がかかる場合があります。
-特に、大きなモデルを使用する場合、メインスレッドでモデルを実行すると、UIがフリーズすることがあります。
-
-Web Workerとは、JavaScriptのコードをバックグラウンドで実行するための仕組みです。
-Web Workerを使用してモデルを実行すると、メインスレッドがブロックされるのを防ぎ、UIの応答性を維持できます。Web Workerとの通信には`postMessage`と`onmessage`を使用します。
+Transformers.jsは、モデルのロードや推論に時間がかかる場合があります。これにより、UIがフリーズしたり、応答性が低下したりすることがあります。
+Web Workerを使用すると、モデルのロードや推論をバックグラウンドで実行できるため、UIの応答性を保つことができます。
+Web Workerとの通信は、`postMessage`と`onmessage`を使用して行います。
 
 ```ts
-const worker = new Worker(new URL("./worker.js", import.meta.url), {
+const worker = new Worker(new URL("./worker.ts", import.meta.url), {
   type: "module",
 });
 
-worker.postMessage({ text: input.value });
-worker.addEventListener("message", onMessageReceived);
+worker.postMessage({ type: "start", data: inputData });
+worker.onmessage = (event) => {
+  const { status, result, progress } = event.data;
+  if (status === "result") {
+    // 結果を処理
+  } else if (status === "progress") {
+    // 進捗を処理
+  }
+};
 ```
+
+### WASMではなくWebGLを使う
+
+Transformers.jsは、WASMとWebGLの両方をサポートしています。WebGLは、WASMよりも高速にモデルを実行できる場合があります。
+ただし、WebGLは初回のモデルの読み込みに時間がかかる場合があります。
+WebGLを使用するには、`use`オプションを設定します。  
+
+```ts
+const translator = await pipeline("translation", model, { use: "webgl" });
+```
+
+### モデル情報をglobalThisにキャッシュする
+
+globalThisにモデル情報をキャッシュすることで、同じモデルを複数回ロードする場合に、再度ダウンロードする必要がなくなります。
+
+```ts
+if (!globalThis.translator) {
+  globalThis.translator = await pipeline("translation", "Xenova/nllb-200-distilled-600M", { use: "webgl" });
+}
+const translator = globalThis.translator;
+```
+
+### progress_callbackを使って進捗を表示する
+
+Transformers.jsの多くの関数は、`progress_callback`というオプションをサポートしています。
+`progress_callback`は、モデルのロードや実行の進捗を監視するためのコールバック関数です。
+`progress_callback`を使用すると、ユーザーに進捗状況を表示できます。
+
+```ts
+const translator = await pipeline("translation", "Xenova/nllb-200-distilled-600M", {
+  progress_callback: (progress) => {
+    self.postMessage({
+      status: "progress",
+      progress,
+    });
+  },
+});
+
+// Vue.jsの例
+<template>
+  <div v-for="data in progressItems" :key="data.file" class="progress-bar">
+    <div class="progress-bar-fill" :style="{ width: data.progress + '%' }"></div>
+    <span class="progress-bar-text">{{ data.file }}: {{ data.progress }}%</span>
+  </div>
+</template>
+```
+
+### パフォーマンス最適化のポイント
+
+Transformers.jsはモデルのサイズによっては、ブラウザでのロードや推論に時間がかかる場合があります。以下に、パフォーマンスを最適化するためのポイントを示します。
+
+- **モデルの選択**: より小さなモデルを選択することで、ロード時間と推論時間を短縮できます。必要に応じて、蒸留モデルや量子化モデルを検討してください。
+- **WebGLの利用**: 可能であれば、WASMよりも高速なWebGLを使用してください。ただし、初回のロード時間が長くなる場合があります。
+- **キャッシュの活用**: IndexedDBやglobalThisにモデルをキャッシュすることで、再度ダウンロードする必要がなくなります。
+- **非同期処理**: Web Workerを使用して、モデルのロードや推論をバックグラウンドで実行し、UIの応答性を保ちます。
+- **進捗表示**: `progress_callback`を使用して、ユーザーに進捗状況を表示します。
