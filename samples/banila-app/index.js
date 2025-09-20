@@ -3,18 +3,25 @@ import {
   pipeline,
 } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.0";
 
-env.allowLocalModels = false;
+env.allowLocalModels = false; // ローカルモデルの使用を禁止
 
-// Reference the elements that we will need
+// UI要素の取得
 const status = document.getElementById("status");
 const fileUpload = document.getElementById("file-upload");
 const imageContainer = document.getElementById("image-container");
 
-// Create a new object detection pipeline
+// モデルのロード
 status.textContent = "Loading model...";
-const detector = await pipeline("object-detection", "Xenova/detr-resnet-50");
+if (!globalThis.__translator) {
+  globalThis.__translator = await pipeline(
+    "object-detection",
+    "Xenova/detr-resnet-50"
+  );
+}
+const detector = globalThis.__translator;
 status.textContent = "Ready";
 
+// 画像がアップロードされたときの処理
 fileUpload.addEventListener("change", function (e) {
   const file = e.target.files[0];
   if (!file) {
@@ -34,7 +41,7 @@ fileUpload.addEventListener("change", function (e) {
   reader.readAsDataURL(file);
 });
 
-// Detect objects in the image
+// 画像内の物体を検出する
 async function detect(img) {
   status.textContent = "Analysing...";
   const output = await detector(img.src, {
@@ -45,18 +52,18 @@ async function detect(img) {
   output.forEach(renderBox);
 }
 
-// Render a bounding box and label on the image
+// 画像にバウンディングボックスとラベルを描画する
 function renderBox({ box, label }) {
   const { xmax, xmin, ymax, ymin } = box;
 
-  // Generate a random color for the box
+  // ボックスにランダムな色を割り当てる
   const color =
     "#" +
     Math.floor(Math.random() * 0xffffff)
       .toString(16)
       .padStart(6, 0);
 
-  // Draw the box
+  // ボックスを描画する
   const boxElement = document.createElement("div");
   boxElement.className = "bounding-box";
   Object.assign(boxElement.style, {
@@ -67,7 +74,7 @@ function renderBox({ box, label }) {
     height: 100 * (ymax - ymin) + "%",
   });
 
-  // Draw label
+  // ラベルを描画する
   const labelElement = document.createElement("span");
   labelElement.textContent = label;
   labelElement.className = "bounding-box-label";

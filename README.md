@@ -49,7 +49,7 @@ Transformer.jsでは、WebGLを使用することでWASMよりもさらに高速
 
 以下に、Transformer.jsを実装する際のポイントを示します。
 
-### bundler 使用時のパス解決エラー
+### react/vue + vite/webpackなどのbundlerを使う場合の注意点
 
 Vite や Webpack などの bundler を使うと、モデルの JSON 取得先が誤って書き換わり、`Unexpected token '<'` が出ることがあります。
 
@@ -75,4 +75,17 @@ env.useBrowserCache = false;   // ブラウザキャッシュを使わない
 - 必要に応じて `env.localModelPath` や `env.remoteModelPath` を明示的に指定してパスを固定する。
 - bundler を使わず CDN 経由でロードする場合は問題が発生しにくい。
 
-<
+### モデルをグローバルにキャッシュする
+
+Transformer.js はモデルのロードに時間がかかる場合があります。
+特に、アプリケーションの複数のコンポーネントで同じモデルを使用する場合、各コンポーネントでモデルを再度ロードすると無駄に時間がかかります。  
+globalThis にモデルをキャッシュしておくと、モデルがキャッシュされ、再度ロードする必要がなくなります。
+
+```js
+if (!globalThis.__translator) {
+  globalThis.__translator = await pipeline(
+    "object-detection",
+    "Xenova/detr-resnet-50"
+  );
+}
+const detector = globalThis.__translator;
