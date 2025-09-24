@@ -19,7 +19,7 @@ Python では `transformers` ライブラリを用いることで、多様なモ
 
 ## Transformers.jsとは
 
-**Transformers.js** は Python 版 `transformers` の一部機能を JavaScript 向けに再実装した **軽量推論ランタイム** で、ブラウザ / Node.js / エッジ環境上でモデルを **ローカル実行** できます。Hugging Face Hub からモデルを取得し、ONNX Runtime Web 等を介して WebGPU/WebGL/WASM などのバックエンドで推論します
+**Transformers.js** は Python 版 `transformers` の一部機能を JavaScript 向けに再実装した **軽量推論ランタイム** で、ブラウザ / Node.js / エッジ環境上でモデルを **ローカル実行** できます。Hugging Face Hub からモデルを取得し、ONNX Runtime Web 等を介して WebGPU/WebGL/WASM などのブラウザバックエンドで推論します。(自動的に最適なバックエンドが選択され、使われる)
 
 - 📝 **NLP**: テキスト分類 / NER / 質問応答 / 要約 / 翻訳 / Multiple Choice / テキスト生成 (Causal LM) / 埋め込み
 - 🖼️ **画像**: 画像分類 / オブジェクト検出 / セグメンテーション / 深度推定 / ゼロショット画像分類
@@ -34,7 +34,7 @@ Python では `transformers` ライブラリを用いることで、多様なモ
 
 Pythonを使って学習させたモデルはそのままではTransformers.jsで使えないことがあります。Transformers.jsで使うには、Hugging FaceのTransformersライブラリを使ってONNX形式に変換する必要があります。
 
-### WASMとWebGLについて
+### WASM/WebGL/WEbGPUについて
 
 WASM（WebAssembly）は、ブラウザ上で高性能なコードを実行するためのバイナリ形式の命令セットです。WASMを使用すると、C++やRustなどの言語で書かれたコードをブラウザ上で実行できます。
 Transformers.jsでは、WASMを使用してモデルの推論を高速化しています。
@@ -42,6 +42,11 @@ Transformers.jsでは、WASMを使用してモデルの推論を高速化して�
 WebGLは、ブラウザ上で3Dグラフィックスを描画するためのAPIです。
 Transformers.jsでは、WebGLを使用することでWASMよりもさらに高速にモデルを実行できます。
 ただ、初回のモデルの読み込みに時間がかかる場合があります。
+
+WebGPUは、ブラウザで最新のGPU機能を利用するための次世代グラフィックス／汎用計算APIです。
+従来のWebGLが「グラフィックス寄り（OpenGL系）」だったのに対し、WebGPUは 低オーバーヘッド／モダンなGPUパイプライン／コンピュートシェーダ（汎用計算） を第一級で扱える設計になっており、機械学習推論の高速化にも適しています。
+
+Transformers.jsでは、環境がサポートしていれば最速候補として WebGPU → WebGL → WASM の順に利用されます。
 
 ### 外部LLMではなく、Transformers.jsを使うメリット
 
@@ -58,7 +63,7 @@ gpt-5やclaude sonetなどの汎用大規模言語モデル（LLM）は、強力
 
 以下に、Transformers.jsを実装する際のポイントを示します。
 
-### react/vue + vite/webpackなどのbundlerを使う場合の注意点
+### ローカル開発でreact/vue + vite/webpackなどのbundlerを使う場合の注意点
 
 Vite や Webpack などの bundler を使うと、モデルの JSON 取得先が誤って書き換わり、`Unexpected token '<'` が出ることがあります。このエラーは「JSON を期待したのに HTML が返ってきた」＝**正しいモデル JSON が取得できていない**ことを意味します。
 
