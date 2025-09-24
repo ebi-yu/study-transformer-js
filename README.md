@@ -1,6 +1,6 @@
 # study-transformers-js
 
-学習目的でtransformers.jsを試すためのリポジトリです。ブラウザ / Node.js で推論が完結する PoC・デモを素早く作るためのサンプルと実装ノウハウをまとめています。
+学習目的で **Hugging Face** の **transformers.js** を試すためのリポジトリです。
 
 ## サンプル一覧
 
@@ -11,34 +11,26 @@
 
 ## Hugging Faceとは
 
-Hugging Faceとは、機械学習モデルの共有と利用を促進するためのプラットフォームです。
-Hugging Faceには、数千もの事前学習済みモデルが公開されており、これらのモデルは様々なタスク（自然言語処理、画像認識、音声認識など）に利用できます。
+**Hugging Face** は、機械学習／生成 AI モデル（LLM を含む）、データセット、アプリ実行環境（**Spaces**）などを共有・発見・運用するためのオープンなプラットフォーム兼コミュニティです。現在は **50 万以上の事前学習済みモデル** と多数のデータセット・デモが公開され、NLP / 画像 / 音声 / マルチモーダルなど幅広いタスクをカバーしています。
+
+Python では `transformers` ライブラリを用いることで、多様なモデル（分類・翻訳・要約・ASR・画像分類・生成など）を **統一 API (`pipeline`)** で扱えます。ブラウザや Node.js では `transformers.js` または **Inference API / エンドポイント** 経由での利用が可能です。
 
 <https://huggingface.co/>
 
 ## Transformers.jsとは
 
-Transformers.jsは、Hugging FaceのTransformersライブラリの一部をJavaScriptで実装したものです。
-Transformers.jsを使用すると、ブラウザやNode.js環境で機械学習モデルを実行できます。
+**Transformers.js** は Python 版 `transformers` の一部機能を JavaScript 向けに再実装した **軽量推論ランタイム** で、ブラウザ / Node.js / エッジ環境上でモデルを **ローカル実行** できます。Hugging Face Hub からモデルを取得し、ONNX Runtime Web 等を介して WebGPU/WebGL/WASM などのバックエンドで推論します
 
-- 📝自然言語処理：テキスト分類、固有表現認識、質問応答、言語モデル化、要約、翻訳、複数選択、テキスト生成。
-- 🖼️コンピューター ビジョン: 画像分類、オブジェクト検出、セグメンテーション、深度推定。
-- 🗣️オーディオ: 自動音声認識、オーディオ分類、およびテキスト読み上げ。
-- 🐙マルチモーダル: 埋め込み、ゼロショットオーディオ分類、ゼロショット画像分類、ゼロショットオブジェクト検出。
+- 📝 **NLP**: テキスト分類 / NER / 質問応答 / 要約 / 翻訳 / Multiple Choice / テキスト生成 (Causal LM) / 埋め込み
+- 🖼️ **画像**: 画像分類 / オブジェクト検出 / セグメンテーション / 深度推定 / ゼロショット画像分類
+- 🗣️ **音声**: 自動音声認識 (ASR) / 音声分類 / TTS（対応モデル）
+- 🐙 **マルチモーダル**: テキスト・画像埋め込み / ゼロショットオブジェクト検出 など
 
 <https://huggingface.co/docs/transformers.js/index>
 
-### Transformers.jsの仕組み
-
-Transformers.jsは、ダウンロードしたモデルをブラウザのIndexedDBに保存し、必要に応じてWebGLやWASMを使用してモデルを実行します。以下に、Transformers.jsがどのように動作するかを示します。
-
-1. モデルのダウンロード: Transformers.jsは、Hugging Faceのモデルをダウンロードし、ブラウザのIndexedDBに保存します。
-2. モデルの実行: 必要に応じて、Transformers.jsはWebGLやWASMを使用してモデルを実行します。これにより、ブラウザ上で高速にモデルを実行できます。
-3. 結果の取得: モデルの実行結果は、JavaScriptのPromiseとして返されます。これにより、非同期的に結果を取得できます。
-
 ### モデルの形式について
 
-モデルは`.onnx`という形式で提供されます。ONNX（Open Neural Network Exchange）は、FacebookとMicrosoftが共同で開発したオープンソースの深層学習モデルのフォーマットです。ONNXは、異なるフレームワーク間でモデルを共有するための標準的な形式を提供します。
+ transformers.js では`.onnx`という形式に変換されたモデルを使います。ONNX（Open Neural Network Exchange）は、FacebookとMicrosoftが共同で開発したオープンソースの深層学習モデルのフォーマットです。ONNXは、異なるフレームワーク間でモデルを共有するための標準的な形式を提供します。
 
 Pythonを使って学習させたモデルはそのままではTransformers.jsで使えないことがあります。Transformers.jsで使うには、Hugging FaceのTransformersライブラリを使ってONNX形式に変換する必要があります。
 
@@ -79,6 +71,8 @@ import { env } from "@xenova/transformers";
 env.allowLocalModels = false; // ローカル参照を無効化（相対パス解決の誤作動防止）
 env.useBrowserCache = false;   // ブラウザキャッシュを使わない
 ```
+
+<https://github.com/huggingface/transformers.js/issues/366#issuecomment-1919213984>
 
 ### Web Workerを使ってUIの応答性を保つ
 
@@ -157,3 +151,11 @@ Transformers.jsはモデルのサイズによっては、ブラウザでのロ�
 - **キャッシュの活用**: IndexedDBやglobalThisにモデルをキャッシュすることで、再度ダウンロードする必要がなくなります。
 - **非同期処理**: Web Workerを使用して、モデルのロードや推論をバックグラウンドで実行し、UIの応答性を保ちます。
 - **進捗表示**: `progress_callback`を使用して、ユーザーに進捗状況を表示します。
+
+## 参考リンク
+
+- Hugging Face Hub: <https://huggingface.co/>
+- transformers.js Docs: <https://huggingface.co/docs/transformers.js/index>
+- ONNX Runtime Web: <https://onnxruntime.ai/docs/execution-providers/Web.html>
+- Optimum (ONNX 変換): <https://huggingface.co/docs/optimum/index>
+- CLIP 例: <https://huggingface.co/Xenova/clip-vit-base-patch32>
