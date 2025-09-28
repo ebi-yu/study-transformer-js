@@ -5,12 +5,12 @@
     <div class="language-container">
       <LanguageSelector
         type="Source"
-        :defaultLanguage="'eng_Latn'"
+        :defaultLanguage="'en'"
         @update:language="(lang) => (sourceLanguage = lang)"
       />
       <LanguageSelector
         type="Target"
-        :defaultLanguage="'jpn_Jpan'"
+        :defaultLanguage="'ja'"
         @update:language="(lang) => (targetLanguage = lang)"
       />
     </div>
@@ -43,8 +43,8 @@ const buttonLabel = computed(() =>
 );
 
 const input = ref("I love walking my dog.");
-const sourceLanguage = ref("eng_Latn");
-const targetLanguage = ref("jpn_Jpan");
+const sourceLanguage = ref("en");
+const targetLanguage = ref("ja");
 const output = ref("");
 
 // Worker 参照
@@ -60,7 +60,7 @@ onMounted(() => {
   const onMessageReceived = (e) => {
     switch (e.data.status) {
       case "initiate":
-        progressItems.value.push(e.data);
+        if (e?.data?.file) progressItems.value.push(e.data);
         disabled.value = true;
         break;
       case "progress":

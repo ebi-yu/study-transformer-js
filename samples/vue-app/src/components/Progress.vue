@@ -1,7 +1,7 @@
 <template>
   <div class="progress-container">
     <div class="progress-bar" :style="{ width: percentage + '%' }">
-      {{ text }} ({{ formattedPercentage }}%)
+      {{ text }} ({{ formattedPercentage }})
     </div>
   </div>
 </template>

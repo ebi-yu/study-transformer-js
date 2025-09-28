@@ -65,7 +65,7 @@ async function getInstance(callback) {
 
       globalThis.__translator = await pipeline(
         "translation",
-        "Xenova/nllb-200-distilled-600M",
+        "Xenova/m2m100_418M",
         {
           progress_callback: (progress) => {
             console.log("Progress:", progress);
