@@ -34,7 +34,7 @@ importers:
         specifier: ^7.1.5
         version: 7.1.6(@types/node@24.5.2)
 
-  samples/banila-app: {}
+  samples/vanilla-app: {}
 
   samples/vue-app:
     dependencies:

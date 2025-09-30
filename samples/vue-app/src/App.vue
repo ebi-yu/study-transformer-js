@@ -42,7 +42,7 @@ const buttonLabel = computed(() =>
   disabled.value ? "Loading..." : "Translate"
 );
 
-const input = ref("I love walking my dog.");
+const input = ref("Hello, how are you?");
 const sourceLanguage = ref("en");
 const targetLanguage = ref("ja");
 const output = ref("");
